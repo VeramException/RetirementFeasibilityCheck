@@ -6,13 +6,14 @@ let staticChart = null;
 export function runStatic() {
     const corpus0 = parseFloat(document.getElementById('corpusSlider').value);
     const age0 = parseInt(document.getElementById('currentAgeSlider').value, 10);
+    const endAge = parseInt(document.getElementById('endAgeSlider').value, 10);
     const monthly0 = parseFloat(document.getElementById('monthlySlider').value);
     const step = parseFloat(document.getElementById('stepupSlider').value) / 100 || 0;
     const retPct = parseFloat(document.getElementById('retSlider').value) / 100 || 0;
     const stop = true;
 
     let rows = [], start = corpus0, m = monthly0, depleted = null;
-    for (let age = age0; age <= 85; age++) {
+    for (let age = age0; age <= endAge; age++) {
         if (depleted !== null) { rows.push({ age, depleted: true }); continue; }
         if (age !== age0) m *= (1 + step);
         const annual = m * 12;
@@ -50,7 +51,7 @@ export function runStatic() {
     if (depleted !== null) {
         summaryDiv.innerHTML = `<span style='color:#dc2626;font-weight:600'>✖ Failed</span> - Corpus depleted at age ${depleted}`;
     } else {
-        summaryDiv.innerHTML = `<span style='color:#16a34a;font-weight:600'>✔ Success</span> - Ending corpus at age 85: <span style='color:#16a34a;'> ₹ ${formatIndian(rows[rows.length-1].end)} </span>`;
+        summaryDiv.innerHTML = `<span style='color:#16a34a;font-weight:600'>✔ Success</span> - Ending corpus at age ${endAge}: <span style='color:#16a34a;'> ₹ ${formatIndian(rows[rows.length-1].end)} </span>`;
     }
 
     const labels = rows.map(r => r.age);

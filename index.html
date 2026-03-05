@@ -15,16 +15,21 @@
 <div class="wrap">
 <h1>Retirement cashflow simulator</h1>
 
-<!-- Top sliders grid -->
-<div class="grid">
+<!-- Top sliders grid - 2 rows, 3 columns -->
+<div class="grid-2x3">
+  <div class="slider-item">
+    <label>Retirement age: <span id="ageValue" class="value-display">37</span></label>
+    <input type="range" id="currentAgeSlider" min="25" max="60" value="37" step="1">
+  </div>
+  <div class="slider-item">
+    <label>Life Expectancy (year): <span id="endAgeValue" class="value-display">85</span></label>
+    <input type="range" id="endAgeSlider" min="80" max="100" value="85" step="1">
+  </div>
+  <div class="slider-item empty"></div>
   <div class="slider-item">
     <label>Initial corpus (₹): <span id="corpusValue" class="value-display">3,50,00,000</span></label>
     <input type="range" id="corpusSlider" min="10000000" max="100000000" value="35000000" step="500000">
     <div id="corpusWords" class="hint"></div>
-  </div>
-  <div class="slider-item">
-    <label>Retirement age: <span id="ageValue" class="value-display">37</span></label>
-    <input type="range" id="currentAgeSlider" min="25" max="60" value="37" step="1">
   </div>
   <div class="slider-item">
     <label>Initial monthly withdrawal (₹): <span id="monthlyValue" class="value-display">75,000</span></label>

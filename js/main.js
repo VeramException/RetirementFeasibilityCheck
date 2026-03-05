@@ -7,12 +7,15 @@ import { loadMarket, runMCFlow, redrawChartWithSamples, renderSampleFail, lastFa
 function updateAll() {
   const corpus = parseFloat(document.getElementById('corpusSlider').value);
   const age = parseInt(document.getElementById('currentAgeSlider').value, 10);
+  const endAge = parseInt(document.getElementById('endAgeSlider').value, 10);
   const monthly = parseFloat(document.getElementById('monthlySlider').value);
   const stepup = parseFloat(document.getElementById('stepupSlider').value);
   const ret = parseFloat(document.getElementById('retSlider').value);
 
+  console.log('updateAll called - endAge:', endAge);
   document.getElementById('corpusValue').textContent = formatNumber(corpus);
   document.getElementById('ageValue').textContent = age;
+  document.getElementById('endAgeValue').textContent = endAge;
   document.getElementById('monthlyValue').textContent = formatNumber(monthly);
   document.getElementById('stepupValue').textContent = stepup.toFixed(1);
   document.getElementById('retValue').textContent = ret.toFixed(1);
@@ -29,7 +32,7 @@ function updateAll() {
 }
 
 // Attach slider events
-['corpusSlider','currentAgeSlider','monthlySlider','stepupSlider','retSlider'].forEach(id => {
+['corpusSlider','currentAgeSlider','endAgeSlider','monthlySlider','stepupSlider','retSlider'].forEach(id => {
   const el = document.getElementById(id);
   if (el) el.addEventListener('input', updateAll);
 });
@@ -71,11 +74,12 @@ document.getElementById('runMc').addEventListener('click', () => {
   const runs = parseInt(document.getElementById('simCountSlider').value, 10) || 1;
   const corpus0 = parseFloat(document.getElementById('corpusSlider').value) || 0;
   const age0 = parseInt(document.getElementById('currentAgeSlider').value, 10) || 0;
+  const endAge = parseInt(document.getElementById('endAgeSlider').value, 10) || 85;
   const monthly0 = parseFloat(document.getElementById('monthlySlider').value) || 0;
   const step = parseFloat(document.getElementById('stepupSlider').value) / 100 || 0;
 
-  // requiredYears logic preserved from original: from current age until 85 inclusive
-  const requiredYears = 85 - age0 + 1;
+  // requiredYears logic: from current age until endAge inclusive
+  const requiredYears = endAge - age0 + 1;
 
   // start UI loading state
   runBtn.innerText = 'Running...';
@@ -90,6 +94,7 @@ document.getElementById('runMc').addEventListener('click', () => {
         runs,
         corpus0,
         age0,
+        endAge,
         monthly0,
         step,
         requiredYears
