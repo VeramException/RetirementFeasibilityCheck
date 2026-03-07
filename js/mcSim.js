@@ -2,6 +2,7 @@
 // Top-level Monte Carlo glue (UI-facing functions). Uses market loader, sequences & engine.
 
 import { loadNifty50 } from './markets/nifty50.js';
+import { loadNifty500 } from './markets/nifty500.js';
 import { getSequencesFromMarket } from './sequences.js';
 import { runBootstrapSimulationFromSequences } from './simEngine.js';
 import { formatIndian, formatDate as fmt } from './utils.js';
@@ -52,6 +53,8 @@ export async function loadMarket(name='nifty50') {
 
     if (name === 'nifty50') {
       marketReturns = await loadNifty50();
+    } else if (name === 'nifty500') {
+      marketReturns = await loadNifty500();
     } else {
       throw new Error('Unknown market: ' + name);
     }

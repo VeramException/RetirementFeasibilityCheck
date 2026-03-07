@@ -20,7 +20,8 @@ export function parseDate(dateStr) {
   const day = parseInt(parts[0], 10);
   const monthStr = parts[1];
   const yearShort = parseInt(parts[2], 10);
-  const year = 2000 + yearShort;
+  // Pivot: years 00-29 are 2000+, years 30-99 are 1900+
+  const year = yearShort < 30 ? 2000 + yearShort : 1900 + yearShort;
   const months = {Jan:0, Feb:1, Mar:2, Apr:3, May:4, Jun:5, Jul:6, Aug:7, Sep:8, Oct:9, Nov:10, Dec:11};
   const month = months[monthStr];
   if (month === undefined) throw new Error(`Invalid month abbreviation: ${monthStr}`);
