@@ -29,10 +29,13 @@ button:disabled{opacity:.6;cursor:not-allowed}
 .loaderOverlay{position:absolute;inset:0;background:rgba(255,255,255,0.8);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;display:none}
 .spinner{width:40px;height:40px;border:4px solid #e5e7eb;border-top:4px solid var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin-bottom:10px}
 @keyframes spin{to{transform:rotate(360deg)}}
-#mcResultsTable { font-size:13px; width:auto; margin-left:auto; margin-right:auto; border-collapse:collapse; background:white; box-shadow:0 2px 8px rgba(0,0,0,0.03); }
-#mcResultsTable th, #mcResultsTable td { padding:6px 12px; text-align:center; border:1px solid #eef2ff; }
-#mcResultsTable th { background:#f6f9ff; font-weight:600; }
-#mcResultsTable td { font-weight:500; }
+#mcOuterContainer { border:none !important; }
+#mcOuterContainer td { border:none !important; }
+#mcResultsTable, #mcPercentilesTable { font-size:13px; border-collapse:collapse; background:white; box-shadow:0 2px 8px rgba(0,0,0,0.03); margin:0; }
+#mcResultsTable th, #mcResultsTable td, #mcPercentilesTable th, #mcPercentilesTable td { padding:8px 14px; text-align:center; border:1px solid #eef2ff; }
+#mcResultsTable th, #mcPercentilesTable th { background:#f6f9ff; font-weight:600; }
+#mcResultsTable td, #mcPercentilesTable td { font-weight:500; }
+#mcResultsTable td:first-child { text-align:left; min-width:120px; }
 .sliderContainer { display:flex; align-items:center; gap:15px; margin:15px 0; flex-wrap:wrap; }
 .sliderContainer label { font-size:13px; color:var(--muted); }
 #simCountSlider { width:300px; }

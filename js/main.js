@@ -1,5 +1,5 @@
 // js/main.js
-import { formatNumber, toIndianWords } from './utils.js';
+import { formatNumber, toIndianWords, formatIndian } from './utils.js';
 import { runStatic } from './staticSim.js';
 import { loadMarket, runMCFlow, redrawChartWithSamples, renderSampleFail, lastFailIndices } from './mcSim.js';
 
@@ -68,7 +68,7 @@ document.getElementById('runMc').addEventListener('click', () => {
   document.getElementById('niftyStatus').style.display = 'none';
   document.getElementById('sampleFailBtn').style.display = 'none';
   document.getElementById('sampleTableContainer').innerHTML = '';
-  document.getElementById('mcResultsTable').style.display = 'none';
+  document.getElementById('mcOuterContainer').style.display = 'none';
 
   // read params from UI (use existing ids from your current HTML)
   const runs = parseInt(document.getElementById('simCountSlider').value, 10) || 1;
@@ -109,7 +109,10 @@ document.getElementById('runMc').addEventListener('click', () => {
       rateCell.textContent = successRate + '%';
       rateCell.style.color = parseFloat(successRate) >= 95 ? '#16a34a' : '#dc2626';
       rateCell.style.fontWeight = 'bold';
-      document.getElementById('mcResultsTable').style.display = 'table';
+      document.getElementById('mcOuterContainer').style.display = 'table';
+
+      // Calculate and update percentile table
+      updatePercentilesTable(simResults);
 
       // draw initial chart with default samples
       redrawChartWithSamples();
@@ -148,6 +151,45 @@ document.querySelectorAll('.tabBtn').forEach(btn => {
     document.getElementById(btn.dataset.tab).classList.add('active');
   });
 });
+
+// Calculate and display percentiles for corpus values
+function updatePercentilesTable(simResults) {
+  if (!simResults || simResults.length === 0) return;
+
+  // Extract final corpus value from each simulation
+  const finalCorpusValues = simResults.map(result => {
+    const pathEndCorpus = result.pathEndCorpus;
+    return pathEndCorpus[pathEndCorpus.length - 1];
+  });
+
+  // Sort values in ascending order
+  finalCorpusValues.sort((a, b) => a - b);
+
+  // Calculate percentiles
+  const calculatePercentile = (arr, percentile) => {
+    const index = (percentile / 100) * (arr.length - 1);
+    const lower = Math.floor(index);
+    const upper = Math.ceil(index);
+    const weight = index % 1;
+
+    if (lower === upper) {
+      return arr[lower];
+    }
+    return arr[lower] * (1 - weight) + arr[upper] * weight;
+  };
+
+  // For "80% probability", we want the value where 80% of cases have AT LEAST this much
+  // That's the 20th percentile (100-80)
+  // Higher probability = lower corpus value (more conservative)
+  const p80 = calculatePercentile(finalCorpusValues, 100 - 80);  // 20th percentile
+  const p90 = calculatePercentile(finalCorpusValues, 100 - 90);  // 10th percentile
+  const p95 = calculatePercentile(finalCorpusValues, 100 - 95);  // 5th percentile
+
+  // Update the percentile table cells
+  document.getElementById('p80').textContent = formatIndian(p80);
+  document.getElementById('p90').textContent = formatIndian(p90);
+  document.getElementById('p95').textContent = formatIndian(p95);
+}
 
 // Update market on selection change
 window.updateMarket = async () => {

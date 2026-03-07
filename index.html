@@ -98,24 +98,59 @@
 <span id="niftyStatus" class="muted"></span>
 </div>
 
-<!-- Monte Carlo results table -->
-<table id="mcResultsTable" style="margin-top:15px; margin-bottom:10px; display:none">
-<thead>
-<tr>
-<th>Total runs</th>
-<th>Passed</th>
-<th>Failed</th>
-<th>Success rate</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td id="mcTotal">0</td>
-<td id="mcPassed">0</td>
-<td id="mcFailed">0</td>
-<td id="mcRate">0%</td>
-</tr>
-</tbody>
+<!-- MC Results Tables Container - 1 row, 2 columns with invisible borders -->
+<table id="mcOuterContainer" style="display:none; border-collapse:collapse; width:auto; margin:20px auto; border:none;">
+  <tr>
+    <!-- Left cell: Success Statistics Table -->
+    <td style="border:none; padding:0 50px 0 0; vertical-align:top;">
+      <table id="mcResultsTable">
+        <tbody>
+          <tr>
+            <td>Total runs</td>
+            <td id="mcTotal">0</td>
+          </tr>
+          <tr>
+            <td>Passed</td>
+            <td id="mcPassed">0</td>
+          </tr>
+          <tr>
+            <td>Failed</td>
+            <td id="mcFailed">0</td>
+          </tr>
+          <tr>
+            <td>Success rate</td>
+            <td id="mcRate">0%</td>
+          </tr>
+        </tbody>
+      </table>
+    </td>
+
+    <!-- Right cell: Percentile Table -->
+    <td style="border:none; padding:0; vertical-align:top;">
+      <table id="mcPercentilesTable">
+        <thead>
+          <tr>
+            <th># simulations</th>
+            <th>Min Corpus Left</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>80%</td>
+            <td id="p80">₹ 0</td>
+          </tr>
+          <tr>
+            <td>90%</td>
+            <td id="p90">₹ 0</td>
+          </tr>
+          <tr>
+            <td>95%</td>
+            <td id="p95">₹ 0</td>
+          </tr>
+        </tbody>
+      </table>
+    </td>
+  </tr>
 </table>
 
 <canvas id="mcChart" height="220" style="display:none"></canvas>
