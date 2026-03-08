@@ -85,7 +85,19 @@
 
 <!-- Slider for number of simulations -->
 <div class="sliderContainer">
-<label>Number of sequences to simulate (max <span id="maxSequences">10,000</span>):</label>
+<label>Number of sequences to simulate (max <span id="maxSequences">10,000</span>):
+  <span class="info-icon">?
+    <div class="tooltip">
+      <b>How sequences are generated:</b>
+      <ul>
+        <li><b>Rolling Block Bootstrap:</b> We use every single historical trading day (20+ years) as a potential starting point for a 1-year return.</li>
+        <li><b>Consecutive Blocks:</b> To capture real-market "clusters" and momentum, we stitch together random blocks of 3 to 8 consecutive historical years.</li>
+        <li><b>Autocorrelation:</b> This maintains the natural sequence of returns (e.g., a bad year often following a peak) better than simple random shuffling.</li>
+        <li><b>High Diversity:</b> By shifting the starting window by just one day, we create thousands of unique, non-repetitive paths grounded in actual history.</li>
+      </ul>
+    </div>
+  </span>
+</label>
 <input type="range" id="simCountSlider" min="1" max="10000" value="4000">
 <span id="simCountValue">1</span>
 </div>
@@ -104,7 +116,19 @@
       <table id="mcResultsTable">
         <tbody>
           <tr>
-            <td>Total runs</td>
+            <td>Total runs
+              <span class="info-icon">?
+                <div class="tooltip">
+                  <b>How sequences are generated:</b>
+                  <ul>
+                    <li><b>Rolling Block Bootstrap:</b> We use every single historical trading day (20+ years) as a potential starting point for a 1-year return.</li>
+                    <li><b>Consecutive Blocks:</b> To capture real-market "clusters" and momentum, we stitch together random blocks of 3 to 8 consecutive historical years.</li>
+                    <li><b>Autocorrelation:</b> This maintains the natural sequence of returns (e.g., a bad year often following a peak) better than simple random shuffling.</li>
+                    <li><b>High Diversity:</b> By shifting the starting window by just one day, we create thousands of unique, non-repetitive paths grounded in actual history.</li>
+                  </ul>
+                </div>
+              </span>
+            </td>
             <td id="mcTotal">0</td>
           </tr>
           <tr>
