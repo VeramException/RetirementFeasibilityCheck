@@ -106,9 +106,32 @@ export function redrawChartWithSamples(samplesCount = null) {
   const failPaths = lastSimPaths.filter(r => r.failedAt !== null).map(r => r.pathEndCorpus);
 
   // compute counts of success/fail to show
-  let successCount = Math.min(successPaths.length, Math.round(totalDisplayPaths * successes / runs));
-  let failCount = Math.min(failPaths.length, totalDisplayPaths - successCount);
-  if (successCount + failCount < totalDisplayPaths) {
+  // We want a dynamic representation: 
+  // 1. If both exist, guarantee a minimum of ~10% for the minority category so it's visible.
+  // 2. Otherwise follow the actual ratio.
+  let successCount = 0;
+  let failCount = 0;
+
+  if (successPaths.length > 0 && failPaths.length > 0) {
+    const minCategory = Math.max(5, Math.floor(totalDisplayPaths * 0.1)); // Guarantee at least 10% or 5 paths
+    
+    // Calculate raw counts based on ratio
+    let rawSuccess = Math.round(totalDisplayPaths * successes / runs);
+    let rawFail = totalDisplayPaths - rawSuccess;
+
+    // Apply "Human Sense" weighting: don't let failures disappear if they exist
+    failCount = Math.max(minCategory, rawFail);
+    failCount = Math.min(failCount, failPaths.length);
+    
+    successCount = totalDisplayPaths - failCount;
+    successCount = Math.max(minCategory, successCount);
+    successCount = Math.min(successCount, successPaths.length);
+    
+    // Final check to not exceed totalDisplayPaths if possible
+    if (successCount + failCount > totalDisplayPaths && failCount > minCategory) {
+        failCount = Math.max(minCategory, totalDisplayPaths - successCount);
+    }
+  } else {
     successCount = Math.min(successPaths.length, totalDisplayPaths);
     failCount = Math.min(failPaths.length, totalDisplayPaths - successCount);
   }
