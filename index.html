@@ -88,12 +88,17 @@
 <label>Number of sequences to simulate (max <span id="maxSequences">10,000</span>):
   <span class="info-icon">?
     <div class="tooltip">
-      <b>How sequences are generated:</b>
       <ul>
-        <li><b>Rolling Block Bootstrap:</b> We use every single historical trading day (20+ years) as a potential starting point for a 1-year return.</li>
-        <li><b>Consecutive Blocks:</b> To capture real-market "clusters" and momentum, we stitch together random blocks of 3 to 8 consecutive historical years.</li>
-        <li><b>Autocorrelation:</b> This maintains the natural sequence of returns (e.g., a bad year often following a peak) better than simple random shuffling.</li>
-        <li><b>High Diversity:</b> By shifting the starting window by just one day, we create thousands of unique, non-repetitive paths grounded in actual history.</li>
+        <li><b>1-Year Rolling Windows:</b> For every trading day in history, we calculate a 1-year return by finding the price change 365 days later. This creates thousands of overlapping samples.</li>
+        <li><b>Adjacency Mapping:</b> Each 1-year period is linked to the specific return period that starts where it ended, allowing us to follow history chronologically.</li>
+        <li><b>Block Stitching:</b> For each simulation:
+          <ol>
+            <li>Pick a random starting day from history.</li>
+            <li>Follow the map for a random "block" of 3 to 8 consecutive years.</li>
+            <li>When a block ends, jump to a new random day and repeat until the end of the simulation.</li>
+          </ol>
+        </li>
+        <li><b>Statistical Integrity:</b> This preserves <b>local momentum</b> and <b>volatility clusters</b> found in real data, while providing massive diversity via daily rolling starts.</li>
       </ul>
     </div>
   </span>
@@ -119,12 +124,17 @@
             <td>Total runs
               <span class="info-icon">?
                 <div class="tooltip">
-                  <b>How sequences are generated:</b>
                   <ul>
-                    <li><b>Rolling Block Bootstrap:</b> We use every single historical trading day (20+ years) as a potential starting point for a 1-year return.</li>
-                    <li><b>Consecutive Blocks:</b> To capture real-market "clusters" and momentum, we stitch together random blocks of 3 to 8 consecutive historical years.</li>
-                    <li><b>Autocorrelation:</b> This maintains the natural sequence of returns (e.g., a bad year often following a peak) better than simple random shuffling.</li>
-                    <li><b>High Diversity:</b> By shifting the starting window by just one day, we create thousands of unique, non-repetitive paths grounded in actual history.</li>
+                    <li><b>1-Year Rolling Windows:</b> For every trading day in history, we calculate a 1-year return by finding the price change 365 days later. This creates thousands of overlapping samples.</li>
+                    <li><b>Adjacency Mapping:</b> Each 1-year period is linked to the specific return period that starts where it ended, allowing us to follow history chronologically.</li>
+                    <li><b>Block Stitching:</b> For each simulation:
+                      <ol>
+                        <li>Pick a random starting day from history.</li>
+                        <li>Follow the map for a random "block" of 3 to 8 consecutive years.</li>
+                        <li>When a block ends, jump to a new random day and repeat until the end of the simulation.</li>
+                      </ol>
+                    </li>
+                    <li><b>Statistical Integrity:</b> This preserves <b>local momentum</b> and <b>volatility clusters</b> found in real data, while providing massive diversity via daily rolling starts.</li>
                   </ul>
                 </div>
               </span>
