@@ -19,6 +19,7 @@ export function initGoals() {
   }
   renderAll();
   setupEventListeners();
+  refreshAllMFNavs(); // Auto-refresh live NAVs on load
 }
 
 function saveToStorage() {
@@ -326,7 +327,10 @@ function renderInvestments() {
         <div class="card-amount-main">₹${formatIndian(inv.units * inv.price)}</div>
       </div>
       <div class="inv-card-body">
-        <div class="inv-units-info">${formatNumber(inv.units)} units @ ₹${formatNumber(inv.price)}</div>
+        <div class="inv-units-info">
+          ${formatNumber(inv.units)} units @ ₹${formatNumber(inv.price)}
+          ${inv.mfCode ? `<span class="live-status-dot"></span><span class="live-status-text">Live rate</span>` : ''}
+        </div>
         <div class="goal-alloc-row">
           <div class="goal-alloc-items-group">
             ${renderAllocationRowOnly(inv.alloc, colors)}
@@ -353,7 +357,122 @@ function renderGoals() {
   list.innerHTML = allGoals.map((goal) => renderGoalCard(goal, false)).join('');
 }
 
-// ==================== HELPERS ====================
+// ==================== MF API SERVICE ====================
+const MF_CACHE_KEY = 'mf_nav_cache';
+const MF_API_BASE = 'https://api.mfapi.in/mf';
+
+async function fetchLiveNAV(schemeCode) {
+    const cache = JSON.parse(localStorage.getItem(MF_CACHE_KEY) || '{}');
+    const today = new Date().toISOString().split('T')[0];
+    
+    if (cache[schemeCode] && cache[schemeCode].date === today) {
+        return cache[schemeCode].nav;
+    }
+
+    try {
+        const res = await fetch(`${MF_API_BASE}/${schemeCode}/latest`);
+        const data = await res.json();
+        if (data.status === 'SUCCESS' && data.data && data.data[0]) {
+            const nav = parseFloat(data.data[0].nav);
+            cache[schemeCode] = { nav, date: today };
+            localStorage.setItem(MF_CACHE_KEY, JSON.stringify(cache));
+            return nav;
+        }
+    } catch (e) {
+        console.error('Failed to fetch NAV:', e);
+    }
+    return null;
+}
+
+async function searchMF(query) {
+    try {
+        const res = await fetch(`${MF_API_BASE}/search?q=${encodeURIComponent(query)}`);
+        return await res.json();
+    } catch (e) {
+        showToast('Search failed: Check your internet');
+        return [];
+    }
+}
+
+// Global MF Search Handlers
+window.handleMFSearch = async () => {
+    const query = document.getElementById('mfSearchInput').value;
+    if (!query || query.length < 3) {
+        showToast('Enter at least 3 characters');
+        return;
+    }
+    
+    const resultsContainer = document.getElementById('mfSearchResults');
+    resultsContainer.innerHTML = '<p class="muted" style="padding:20px; text-align:center;">Searching...</p>';
+    
+    const results = await searchMF(query);
+    if (!results || results.length === 0) {
+        resultsContainer.innerHTML = '<p class="muted" style="padding:20px; text-align:center;">No funds found.</p>';
+        return;
+    }
+
+    resultsContainer.innerHTML = results.map(fund => `
+        <div class="mf-result-item" onclick="window.selectMF('${fund.schemeCode}', '${fund.schemeName.replace(/'/g, "\\'")}')">
+            <span class="mf-result-name">${fund.schemeName}</span>
+            <span class="mf-result-code">Code: ${fund.schemeCode}</span>
+        </div>
+    `).join('');
+};
+
+function updateNavInputState() {
+    const isAuto = document.getElementById('navAutoToggle').checked;
+    const invPrice = document.getElementById('invPrice');
+    if (!invPrice) return;
+    
+    if (isAuto) {
+        invPrice.readOnly = true;
+        invPrice.style.background = '#f8fafc';
+        invPrice.style.cursor = 'not-allowed';
+        invPrice.title = 'NAV is automatically synced. Switch to Manual to edit.';
+    } else {
+        invPrice.readOnly = false;
+        invPrice.style.background = '#fff';
+        invPrice.style.cursor = 'text';
+        invPrice.title = '';
+    }
+}
+
+window.selectMF = async (code, name) => {
+    document.getElementById('mfSearchResults').innerHTML = '<p class="muted" style="padding:20px; text-align:center;">Fetching latest NAV...</p>';
+    const nav = await fetchLiveNAV(code);
+    if (nav) {
+        document.getElementById('invName').value = name;
+        setFormattedValue('invPrice', nav, '₹');
+        document.getElementById('investmentForm').dataset.mfCode = code;
+        updateInvValue();
+        document.getElementById('navAutoToggle').checked = true;
+        updateNavInputState();
+        document.getElementById('mfSearchOverlay').style.display = 'none';
+        showToast('Fund details linked!', 'success');
+    } else {
+        showToast('Failed to get NAV for this fund.');
+        document.getElementById('mfSearchResults').innerHTML = '<p class="muted" style="padding:20px; text-align:center;">Select a fund to continue</p>';
+        document.getElementById('navAutoToggle').checked = false;
+        updateNavInputState();
+    }
+};
+
+async function refreshAllMFNavs() {
+    let updated = false;
+    for (let inv of state.investments) {
+        if (inv.mfCode) {
+            const nav = await fetchLiveNAV(inv.mfCode);
+            if (nav && Math.abs(nav - inv.price) > 0.0001) {
+                inv.price = nav;
+                updated = true;
+            }
+        }
+    }
+    if (updated) {
+        saveToStorage();
+        renderAll();
+    }
+}
 function calculateGoalCurrentValue(goal) {
   let total = 0;
   goal.links.forEach(link => {
@@ -504,12 +623,16 @@ function setupEventListeners() {
         const dt = parseFloat(document.getElementById('allocDt').value) || 0;
         const gd = parseFloat(document.getElementById('allocGd').value) || 0;
         const ot = parseFloat(document.getElementById('allocOt').value) || 0;
+        const mfCode = document.getElementById('investmentForm').dataset.mfCode || null;
 
-        if (!name || isNaN(units) || isNaN(price)) { showToast('Please fill all fields'); return; }
+        if (!name || isNaN(units) || units <= 0 || isNaN(price) || price <= 0) { 
+            showToast('Please enter a valid name, units (>0), and price (>0)'); 
+            return; 
+        }
         if (Math.round(eq + dt + gd + ot) !== 100) { showToast('Total allocation must be 100%'); return; }
 
         const id = document.getElementById('investmentForm').dataset.editId || Date.now().toString();
-        const inv = { id, name, units, price, alloc: { eq, dt, gd, ot } };
+        const inv = { id, name, units, price, alloc: { eq, dt, gd, ot }, mfCode };
 
         const idx = state.investments.findIndex(i => i.id === id);
         if (idx > -1) state.investments[idx] = inv;
@@ -541,6 +664,58 @@ function setupEventListeners() {
 
   const cancelInv = document.getElementById('cancelInvestment');
   if (cancelInv) cancelInv.addEventListener('click', closeForms);
+
+  // MF Search Handlers
+  const searchMFBtn = document.getElementById('searchMFBtn');
+  if (searchMFBtn) {
+    searchMFBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.getElementById('mfSearchInput').value = '';
+        document.getElementById('mfSearchResults').innerHTML = '<p class="muted" style="padding:20px; text-align:center;">Enter fund name to search...</p>';
+        document.getElementById('mfSearchOverlay').style.display = 'flex';
+    });
+  }
+
+  const mfSearchActionBtn = document.getElementById('mfSearchActionBtn');
+  if (mfSearchActionBtn) mfSearchActionBtn.addEventListener('click', window.handleMFSearch);
+  
+  const mfSearchInput = document.getElementById('mfSearchInput');
+  if (mfSearchInput) {
+    mfSearchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') window.handleMFSearch();
+    });
+  }
+
+  const cancelMfSearch = document.getElementById('cancelMfSearch');
+  if (cancelMfSearch) {
+    cancelMfSearch.addEventListener('click', () => {
+        document.getElementById('mfSearchOverlay').style.display = 'none';
+        // If we canceled and don't have a linked fund, revert toggle
+        if (!document.getElementById('investmentForm').dataset.mfCode) {
+            document.getElementById('navAutoToggle').checked = false;
+            updateNavInputState();
+        }
+    });
+  }
+
+  // NAV Auto/Manual Toggle Handler
+  const navAutoToggle = document.getElementById('navAutoToggle');
+  if (navAutoToggle) {
+    navAutoToggle.addEventListener('change', (e) => {
+        if (e.target.checked) {
+            // Switched to Auto: Open search if no code linked, or just keep readonly
+            if (!document.getElementById('investmentForm').dataset.mfCode) {
+                document.getElementById('mfSearchInput').value = '';
+                document.getElementById('mfSearchResults').innerHTML = '<p class="muted" style="padding:20px; text-align:center;">Enter fund name to search...</p>';
+                document.getElementById('mfSearchOverlay').style.display = 'flex';
+            }
+        } else {
+            // Switched to Manual: Clear code and make editable
+            document.getElementById('investmentForm').dataset.mfCode = '';
+        }
+        updateNavInputState();
+    });
+  }
 
   // Goal Form
   const showAddGoal = document.getElementById('showAddGoal');
@@ -775,12 +950,20 @@ function resetInvForm() {
   const title = document.getElementById('invFormTitle');
   if (title) title.textContent = 'Add Investment';
   const form = document.getElementById('investmentForm');
-  if (form) form.dataset.editId = '';
+  if (form) {
+    form.dataset.editId = '';
+    form.dataset.mfCode = '';
+  }
   const name = document.getElementById('invName');
   if (name) name.value = '';
   setFormattedValue('invUnits', '', '');
   setFormattedValue('invPrice', '', '₹');
   updateInvValue();
+  
+  const toggle = document.getElementById('navAutoToggle');
+  if (toggle) toggle.checked = false;
+  updateNavInputState();
+
   const del = document.getElementById('deleteInvestment');
   if (del) del.style.display = 'none';
   const fields = ['allocEq', 'allocDt', 'allocGd', 'allocOt'];
@@ -817,12 +1000,20 @@ window.editInvestmentById = (id) => {
   const title = document.getElementById('invFormTitle');
   if (title) title.textContent = 'Edit Investment';
   const form = document.getElementById('investmentForm');
-  if (form) form.dataset.editId = inv.id;
+  if (form) {
+    form.dataset.editId = inv.id;
+    form.dataset.mfCode = inv.mfCode || '';
+  }
   const name = document.getElementById('invName');
   if (name) name.value = inv.name;
   setFormattedValue('invUnits', inv.units, '');
   setFormattedValue('invPrice', inv.price, '₹');
   updateInvValue();
+
+  const toggle = document.getElementById('navAutoToggle');
+  if (toggle) toggle.checked = !!inv.mfCode;
+  updateNavInputState();
+
   const del = document.getElementById('deleteInvestment');
   if (del) del.style.display = 'block';
   document.getElementById('allocEq').value = inv.alloc.eq;
