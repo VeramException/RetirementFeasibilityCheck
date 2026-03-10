@@ -6,7 +6,7 @@ import { loadNifty500 } from './markets/nifty500.js';
 import { loadNiftyNext50 } from './markets/niftynext50.js';
 import { getSequencesFromMarket } from './sequences.js';
 import { runBootstrapSimulationFromSequences } from './simEngine.js';
-import { formatIndian, formatDate as fmt } from './utils.js';
+import { formatIndian, formatDate as fmt, xirr } from './utils.js';
 
 // exported state for UI usage
 export let marketReturns = [];
@@ -212,6 +212,12 @@ export function renderSampleFail() {
   let m = monthly0;
   let rows = [];
   let depletedFlag = false;
+  let wasDepletedPreviously = false;
+
+  // Track cashflows for XIRR using a fixed annual timeline starting 01-01-2000
+  const baseDate = new Date(2000, 0, 1);
+  const cashflowValues = [-corpus0];
+  const cashflowDates = [baseDate];
 
   for (let y = 0; y < path.length; y++) {
     const age = age0 + y;
@@ -224,13 +230,31 @@ export function renderSampleFail() {
     const withdrawal = m * 12;
     const finalCorpus = path[y];
 
+    const endDateForXIRR = new Date(2000 + y + 1, 0, 1);
+
     if (finalCorpus <= 0) depletedFlag = true;
+
+    let yearXIRRValue = "";
+    if (!wasDepletedPreviously) {
+        const currentCashflowValues = [...cashflowValues];
+        const currentCashflowDates = [...cashflowDates];
+        
+        // Current year cashflow = withdrawal + ending corpus (exit value)
+        currentCashflowValues.push(withdrawal + finalCorpus);
+        currentCashflowDates.push(endDateForXIRR);
+        
+        const rate = xirr(currentCashflowValues, currentCashflowDates);
+        yearXIRRValue = isNaN(rate) ? "N/A" : (rate * 100).toFixed(2) + "%";
+        
+        if (depletedFlag) wasDepletedPreviously = true;
+    }
 
     rows.push({
       age,
       startDate: fmt(startDate),
       endDate: fmt(endDate),
       retPct: (ret * 100).toFixed(2) + '%',
+      xirr: yearXIRRValue,
       startCorpus,
       afterReturn,
       withdrew: withdrawal,
@@ -238,11 +262,16 @@ export function renderSampleFail() {
       depleted: depletedFlag
     });
 
+    // Update cashflow history for next year's calculation
+    // This year's withdrawal is a cash inflow to the user
+    cashflowValues.push(withdrawal);
+    cashflowDates.push(endDateForXIRR);
+
     startCorpus = finalCorpus;
     if (y < path.length - 1) m *= (1 + step);
   }
 
-  let html = '<table id="sampleTable"><thead><tr><th>Age</th><th>Fund Start Date</th><th>Fund End Date</th><th>Return %</th><th>Starting Corpus</th><th>After Return</th><th>Withdrew</th><th>Final Corpus</th></tr></thead><tbody>';
+  let html = '<table id="sampleTable"><thead><tr><th>Age</th><th>Fund Start Date</th><th>Fund End Date</th><th>Return %</th><th>XIRR so far</th><th>Starting Corpus</th><th>After Return</th><th>Withdrew</th><th>Final Corpus</th></tr></thead><tbody>';
   rows.forEach(r => {
     const rowClass = r.depleted ? 'depleted-row' : '';
     const retClass = r.retPct.includes('-') ? 'negative' : '';
@@ -254,6 +283,7 @@ export function renderSampleFail() {
       <td>${r.startDate}</td>
       <td>${r.endDate}</td>
       <td class="${retClass}">${r.retPct}</td>
+      <td>${r.xirr}</td>
       <td class="${startClass}">₹ ${formatIndian(r.startCorpus)}</td>
       <td class="${afterClass}">₹ ${formatIndian(r.afterReturn)}</td>
       <td>₹ ${formatIndian(r.withdrew)}</td>

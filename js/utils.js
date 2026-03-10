@@ -33,6 +33,48 @@ export function formatDate(date) {
   return `${date.getDate()}-${months[date.getMonth()]}-${date.getFullYear()}`;
 }
 
+/**
+ * XIRR calculation using Newton's method.
+ * @param {Array<number>} values Cash flow values.
+ * @param {Array<Date>} dates Cash flow dates.
+ * @param {number} guess Initial guess for the rate.
+ */
+export function xirr(values, dates, guess = 0.1) {
+  if (values.length !== dates.length) return NaN;
+
+  const firstDate = dates[0].getTime();
+  const dayFactor = 365.25 * 24 * 60 * 60 * 1000;
+
+  function f(rate) {
+    let sum = 0;
+    for (let i = 0; i < values.length; i++) {
+      const days = (dates[i].getTime() - firstDate) / dayFactor;
+      sum += values[i] / Math.pow(1 + rate, days);
+    }
+    return sum;
+  }
+
+  function df(rate) {
+    let sum = 0;
+    for (let i = 0; i < values.length; i++) {
+      const days = (dates[i].getTime() - firstDate) / dayFactor;
+      sum -= days * values[i] / Math.pow(1 + rate, days + 1);
+    }
+    return sum;
+  }
+
+  let rate = guess;
+  for (let i = 0; i < 50; i++) {
+    const y = f(rate);
+    const dy = df(rate);
+    if (Math.abs(dy) < 1e-12) break;
+    const nextRate = rate - y / dy;
+    if (Math.abs(nextRate - rate) < 1e-7) return nextRate;
+    rate = nextRate;
+  }
+  return rate;
+}
+
 /* ===== Seeded PRNG (mulberry32) =====
    Use seed (number) to get deterministic randomness in [0,1).
    Example: const rnd = mulberry32(12345); rnd() -> 0..1
