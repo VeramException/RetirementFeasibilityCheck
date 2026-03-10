@@ -1,5 +1,5 @@
 // js/goals.js
-import { formatNumber, formatIndian } from './utils.js';
+import { formatNumber, formatIndian, showToast } from './utils.js';
 
 let state = {
   investments: [],
@@ -70,24 +70,55 @@ function renderDashboard() {
 
   const container = document.getElementById('goalSummaryContainer');
   if (!container) return;
-  const surplus = getSurplusGoal();
-  const allGoals = [...state.goals];
-  if (surplus) allGoals.push(surplus);
 
-  if (allGoals.length === 0) {
-    container.innerHTML = '<p class="muted">No goals added yet.</p>';
+  if (state.investments.length === 0) {
+    container.innerHTML = '<p class="muted">No investments added yet.</p>';
     return;
   }
 
-  container.innerHTML = allGoals.map(goal => renderGoalCard(goal, true)).join('');
+  const sortedInvestments = [...state.investments]
+    .map(inv => ({ ...inv, val: inv.units * inv.price }))
+    .sort((a, b) => b.val - a.val);
+
+  const tableHtml = `
+    <div style="margin-top: 20px;">
+      <h3 onclick="window.goToInvestments()" style="font-size: 16px; margin-bottom: 12px; color: var(--accent); cursor: pointer; display: inline-block;">Holdings ↗</h3>
+      <table class="linked-inv-table">
+        <thead>
+          <tr>
+            <th style="text-align: left;">Investment</th>
+            <th style="text-align: center;">% of NW</th>
+            <th style="text-align: right;">Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${sortedInvestments.map(inv => `
+            <tr>
+              <td style="text-align: left;">${inv.name}</td>
+              <td style="text-align: center;">${total > 0 ? Math.round((inv.val / total) * 100) : 0}%</td>
+              <td style="text-align: right; font-weight: 600;">₹${formatIndian(inv.val)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+  container.innerHTML = tableHtml;
 }
+
+window.goToInvestments = () => {
+    const btn = document.querySelector('.tabBtn[data-tab="investmentsTab"]');
+    if (btn) btn.click();
+};
 
 function renderGoalCard(goal, isSummary = false) {
   const currentVal = calculateGoalCurrentValue(goal);
   const goalAlloc = calculateGoalAllocation(goal);
   const colors = { eq: '#2b7cff', dt: '#64748b', gd: '#f59e0b', ot: '#94a3b8' };
-  const editAttr = goal.isSurplus ? '' : `ondblclick="window.editGoalById('${goal.id}')"`;
-  const styleAttr = goal.isSurplus ? 'style="border-style:dashed; background:#f8fafc; cursor:default;"' : '';
+  
+  // Setup attributes
+  const clickFn = isSummary ? '' : `window.handleGoalClick(event, '${goal.id}', ${!!goal.isSurplus})`;
+  const styleAttr = goal.isSurplus ? 'style="border-style:dashed; background:#f8fafc; cursor:pointer;"' : '';
 
   let headerAmount = `Target: ₹${formatIndian(goal.target)}`;
   let surplusText = '';
@@ -99,39 +130,109 @@ function renderGoalCard(goal, isSummary = false) {
     }
   }
 
-  if (goal.noTrack) {
-    return `
-      <div class="goal-card" ${editAttr} ${styleAttr}>
-        <div class="card-header">
-          <span class="card-title">${goal.name}</span>
-          <span class="card-amount">₹${formatIndian(currentVal)}</span>
+  const progress = goal.noTrack ? null : Math.round((currentVal / goal.target) * 100);
+  const reqXirr = goal.noTrack ? null : calculateRequiredXirr(currentVal, goal.target, goal.year);
+
+  // Expanded table logic
+  let expandedContent = '';
+  if (!isSummary && goal.links.length > 0) {
+    const sortedLinks = [...goal.links]
+        .map(l => ({ ...l, inv: state.investments.find(i => i.id === l.invId) }))
+        .filter(l => l.inv)
+        .map(l => ({ ...l, val: (l.inv.units * l.inv.price) * (l.pct / 100) }))
+        .sort((a, b) => b.val - a.val);
+
+    expandedContent = `
+        <div class="expanded-content" id="expanded-${goal.id}" style="display:none;">
+            <table class="linked-inv-table">
+                <thead>
+                    <tr>
+                        <th>Investment</th>
+                        <th>Linked %</th>
+                        <th class="val-col">Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${sortedLinks.map(l => `
+                        <tr>
+                            <td>${l.inv.name}</td>
+                            <td>${l.pct.toFixed(1)}%</td>
+                            <td class="val-col">₹${formatIndian(l.val)}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
         </div>
-        ${renderMiniAllocWithProgress(goalAlloc, null, colors)}
-      </div>
     `;
   }
-
-  const progress = Math.round((currentVal / goal.target) * 100);
-  const reqXirr = calculateRequiredXirr(currentVal, goal.target, goal.year);
   
   return `
-    <div class="goal-card" ${editAttr}>
+    <div class="goal-card" id="goal-card-${goal.id}" onclick="${clickFn}" ${styleAttr}>
       <div class="card-header">
-        <span class="card-title">${goal.name} (${goal.year})</span>
-        <span class="card-amount">${headerAmount}</span>
+        <span class="card-title">${goal.name} ${goal.noTrack ? '' : `(${goal.year})`}</span>
+        <span class="card-amount">${goal.noTrack ? `₹${formatIndian(currentVal)}` : headerAmount}</span>
       </div>
-      <div class="progress-container"><div class="progress-bar" style="width:${Math.min(100, progress)}%"></div></div>
-      ${renderMiniAllocWithProgress(goalAlloc, { progress, currentVal, reqXirr, surplusText }, colors)}
+      ${goal.noTrack ? '' : `<div class="progress-container"><div class="progress-bar" style="width:${Math.min(100, progress)}%"></div></div>`}
+      ${renderMiniAllocWithProgress(goalAlloc, goal.noTrack ? null : { progress, currentVal, reqXirr, surplusText }, colors)}
+      ${expandedContent}
     </div>
   `;
 }
 
+// Global click/tap trackers
+let lastGoalClickTime = 0;
+let lastGoalClickId = null;
+let lastInvClickTime = 0;
+let lastInvClickId = null;
+
+window.handleGoalClick = (e, id, isSurplus) => {
+    const currentTime = new Date().getTime();
+    const tapThreshold = 300; // ms
+    
+    if (lastGoalClickId === id && (currentTime - lastGoalClickTime) < tapThreshold) {
+        // Double tap - edit
+        if (!isSurplus) window.editGoalById(id);
+        lastGoalClickId = null; // Reset
+    } else {
+        // Single tap - toggle expand
+        window.toggleGoalExpand(id);
+        lastGoalClickId = id;
+    }
+    lastGoalClickTime = currentTime;
+};
+
+window.handleInvClick = (e, id) => {
+    const currentTime = new Date().getTime();
+    const tapThreshold = 300; 
+    
+    if (lastInvClickId === id && (currentTime - lastInvClickTime) < tapThreshold) {
+        // Double tap - edit
+        window.editInvestmentById(id);
+        lastInvClickId = null;
+    } else {
+        // Single tap - do nothing or highlight? (Investment cards don't expand yet)
+        lastInvClickId = id;
+    }
+    lastInvClickTime = currentTime;
+};
+
+window.toggleGoalExpand = (id) => {
+    const card = document.getElementById(`goal-card-${id}`);
+    const content = document.getElementById(`expanded-${id}`);
+    if (!card || !content) return;
+    
+    const isExpanded = card.classList.toggle('expanded');
+    content.style.display = isExpanded ? 'block' : 'none';
+};
+
 function renderMiniAllocWithProgress(alloc, progressData, colors) {
   const allocHtml = `
     <div class="goal-alloc-row">
-      ${renderAllocationRowOnly(alloc, colors)}
+      <div class="goal-alloc-items-group">
+        ${renderAllocationRowOnly(alloc, colors)}
+      </div>
       ${progressData ? `
-        <div style="flex:1; text-align:right; font-size:11px; color:var(--muted);">
+        <div class="goal-progress-info">
           ${progressData.surplusText}
           Progress: ${progressData.progress}% (₹${formatIndian(progressData.currentVal)}) • 
           <span class="xirr-badge">Req. XIRR: ${progressData.reqXirr}%</span>
@@ -192,8 +293,13 @@ function updateAllocationChart(alloc, colors) {
         legend: { display: false },
         tooltip: {
           enabled: hasData,
+          position: 'nearest',
+          caretPadding: 15,
+          displayColors: false,
+          padding: 10,
+          bodyFont: { size: 12 },
           callbacks: {
-            label: (item) => ` ₹${formatIndian(item.raw)}`
+            label: (item) => ` ${item.label}: ₹${formatIndian(item.raw)}`
           }
         }
       },
@@ -214,15 +320,17 @@ function renderInvestments() {
   const colors = { eq: '#2b7cff', dt: '#64748b', gd: '#f59e0b', ot: '#94a3b8' };
 
   list.innerHTML = state.investments.map((inv) => `
-    <div class="investment-card" ondblclick="window.editInvestmentById('${inv.id}')">
-      <div class="card-header" style="margin-bottom:2px;">
+    <div class="investment-card" onclick="window.handleInvClick(event, '${inv.id}')">
+      <div class="card-header">
         <span class="card-title">${inv.name}</span>
-        <div style="text-align:right; font-size:16px; font-weight:800; color:var(--accent);">₹${formatIndian(inv.units * inv.price)}</div>
+        <div class="card-amount-main">₹${formatIndian(inv.units * inv.price)}</div>
       </div>
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <div style="font-size:12px; color:var(--muted);">${formatNumber(inv.units)} units @ ₹${formatNumber(inv.price)}</div>
-        <div class="goal-alloc-row" style="margin-top:0; border:none; padding:0;">
-          ${renderAllocationRowOnly(inv.alloc, colors)}
+      <div class="inv-card-body">
+        <div class="inv-units-info">${formatNumber(inv.units)} units @ ₹${formatNumber(inv.price)}</div>
+        <div class="goal-alloc-row">
+          <div class="goal-alloc-items-group">
+            ${renderAllocationRowOnly(inv.alloc, colors)}
+          </div>
         </div>
       </div>
     </div>
@@ -397,8 +505,8 @@ function setupEventListeners() {
         const gd = parseFloat(document.getElementById('allocGd').value) || 0;
         const ot = parseFloat(document.getElementById('allocOt').value) || 0;
 
-        if (!name || isNaN(units) || isNaN(price)) { alert('Please fill all fields'); return; }
-        if (Math.round(eq + dt + gd + ot) !== 100) { alert('Total allocation must be 100%'); return; }
+        if (!name || isNaN(units) || isNaN(price)) { showToast('Please fill all fields'); return; }
+        if (Math.round(eq + dt + gd + ot) !== 100) { showToast('Total allocation must be 100%'); return; }
 
         const id = document.getElementById('investmentForm').dataset.editId || Date.now().toString();
         const inv = { id, name, units, price, alloc: { eq, dt, gd, ot } };
@@ -453,7 +561,7 @@ function setupEventListeners() {
         const target = noTrack ? 0 : getRawValue('goalTarget');
         const year = noTrack ? 9999 : parseInt(document.getElementById('goalYear').value);
 
-        if (!name || (!noTrack && (isNaN(target) || isNaN(year)))) { alert('Please fill all fields'); return; }
+        if (!name || (!noTrack && (isNaN(target) || isNaN(year)))) { showToast('Please fill all fields'); return; }
 
         // Validation for investment linking limits
         const currentGoalId = document.getElementById('goalForm').dataset.editId;
@@ -469,7 +577,7 @@ function setupEventListeners() {
             
             const maxAvailable = 100 - otherGoalsPct;
             if (link.pct > maxAvailable + 0.01) {
-                alert(`Only ${maxAvailable.toFixed(1)}% of ${inv.name} is available for linking.`);
+                showToast(`Only ${maxAvailable.toFixed(1)}% of ${inv.name} is available for linking.`);
                 return;
             }
         }
@@ -510,7 +618,7 @@ function setupEventListeners() {
     addTag.addEventListener('click', (e) => {
         e.preventDefault();
         const popup = document.getElementById('investmentSelectorPopup');
-        if (state.investments.length === 0) { alert('No more existing investments found. Go to Investments tab, and new investments'); return; }
+        if (state.investments.length === 0) { showToast('No more existing investments found. Go to Investments tab, and new investments'); return; }
         
         const currentGoalId = document.getElementById('goalForm').dataset.editId;
         const untagged = state.investments.map(inv => {
@@ -526,7 +634,7 @@ function setupEventListeners() {
             return { ...inv, remainingPct };
         }).filter(inv => inv.remainingPct > 0.01);
 
-        if (untagged.length === 0) { alert('No more existing investments found. Go to Investments tab, and new investments'); return; }
+        if (untagged.length === 0) { showToast('No more existing investments found. Go to Investments tab, and new investments'); return; }
 
         popup.innerHTML = untagged.map(inv => `
             <div class="selector-item" onclick="window.addTagToActiveGoal('${inv.id}', ${inv.remainingPct})">
@@ -582,9 +690,9 @@ function setupEventListeners() {
                 state = data;
                 saveToStorage();
                 renderAll();
-                alert('Data imported successfully!');
+                showToast('Data imported successfully!', 'success');
             } catch (err) {
-                alert('Failed to import: ' + err.message);
+                showToast('Failed to import: ' + err.message);
             }
             e.target.value = ''; // Reset file input
         };

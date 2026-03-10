@@ -46,3 +46,24 @@ export function mulberry32(seed) {
     return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
   };
 }
+
+export function showToast(message, type = 'error', duration = 5000) {
+  const container = document.getElementById('toastContainer');
+  if (!container) return;
+
+  const toast = document.createElement('div');
+  toast.className = 'toast ' + type;
+  toast.textContent = message;
+
+  container.appendChild(toast);
+
+  // Auto-remove after duration
+  setTimeout(() => {
+    toast.classList.add('fade-out');
+    toast.addEventListener('animationend', (e) => {
+      if (e.animationName === 'fadeOut') {
+        toast.remove();
+      }
+    });
+  }, duration);
+}

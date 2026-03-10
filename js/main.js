@@ -1,5 +1,5 @@
 // js/main.js
-import { formatNumber, toIndianWords, formatIndian } from './utils.js';
+import { formatNumber, toIndianWords, formatIndian, showToast } from './utils.js';
 import { runStatic } from './staticSim.js';
 import { loadMarket, runMCFlow, redrawChartWithSamples, renderSampleFail, lastFailIndices } from './mcSim.js';
 import { initGoals } from './goals.js';
@@ -63,7 +63,7 @@ if (samplesSlider) {
 document.getElementById('runMc').addEventListener('click', () => {
   const runBtn = document.getElementById('runMc');
 
-  if (runBtn.disabled) { alert('Market data not ready yet'); return; }
+  if (runBtn.disabled) { showToast('Market data not ready yet'); return; }
 
   // reset UI state
   document.getElementById('niftyStatus').style.display = 'none';
@@ -127,7 +127,7 @@ document.getElementById('runMc').addEventListener('click', () => {
       }
     } catch (e) {
       console.error('MC run failed:', e);
-      alert('Simulation failed: ' + e.message);
+      showToast('Simulation failed: ' + e.message);
     } finally {
       // end loading state
       document.getElementById('mcLoader').style.display = 'none';
