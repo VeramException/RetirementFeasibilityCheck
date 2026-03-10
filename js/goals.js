@@ -320,7 +320,10 @@ function renderInvestments() {
 
   const colors = { eq: '#2b7cff', dt: '#64748b', gd: '#f59e0b', ot: '#94a3b8' };
 
-  list.innerHTML = state.investments.map((inv) => `
+  const sortedInvestments = [...state.investments]
+    .sort((a, b) => (b.units * b.price) - (a.units * a.price));
+
+  list.innerHTML = sortedInvestments.map((inv) => `
     <div class="investment-card" onclick="window.handleInvClick(event, '${inv.id}')">
       <div class="card-header">
         <span class="card-title">${inv.name}</span>
