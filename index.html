@@ -19,210 +19,320 @@
 </header>
 
 <div class="wrap">
-<h1>Retirement cashflow simulator</h1>
 
-<!-- Top sliders grid - 2 rows, 3 columns -->
-<div class="grid-2x3">
-  <div class="slider-item">
-    <label>Retirement age: <span id="ageValue" class="value-display">37</span></label>
-    <input type="range" id="currentAgeSlider" min="25" max="60" value="37" step="1">
-  </div>
-  <div class="slider-item">
-    <label>Life Expectancy (year): <span id="endAgeValue" class="value-display">85</span></label>
-    <input type="range" id="endAgeSlider" min="80" max="100" value="85" step="1">
-  </div>
-  <div class="slider-item empty"></div>
-  <div class="slider-item">
-    <label>Initial corpus (₹): <span id="corpusValue" class="value-display">3,50,00,000</span></label>
-    <input type="range" id="corpusSlider" min="10000000" max="100000000" value="35000000" step="500000">
-    <div id="corpusWords" class="hint"></div>
-  </div>
-  <div class="slider-item">
-    <label>Initial monthly withdrawal (₹): <span id="monthlyValue" class="value-display">75,000</span></label>
-    <input type="range" id="monthlySlider" min="50000" max="200000" value="75000" step="1000">
-    <div id="monthlyWords" class="hint"></div>
-  </div>
-  <div class="slider-item">
-    <label>Increase withdrawal each year (%): <span id="stepupValue" class="value-display">6</span></label>
-    <input type="range" id="stepupSlider" min="3" max="8" value="6" step="0.1">
-  </div>
+<div class="primaryTabHeader">
+  <div class="primaryTabBtn active" data-tab="simulatorTab">Retirement Cashflow Simulator</div>
+  <div class="primaryTabBtn" data-tab="goalTrackingTab">Goal Tracking</div>
 </div>
 
-<hr class="divider">
-
-<div class="tabContainer">
-<div class="tabHeader">
-<div class="tabBtn active" data-tab="staticTab">Static Analysis</div>
-<div class="tabBtn" data-tab="dynamicTab">Sequence of Returns Risk Analysis</div>
-<div class="tabBtn" data-tab="bucketTab">3 Bucket Strategy</div>
-</div>
-
-<div class="tabBody">
-
-<!-- STATIC TAB -->
-<div id="staticTab" class="tabContent active">
-<div class="grid">
-<div class="slider-item">
-<label>Estimated annual return (%): <span id="retValue" class="value-display">7</span></label>
-<input type="range" id="retSlider" min="5" max="12" value="7" step="0.1">
-</div>
-</div>
-
-<div id="staticSummary" class="muted"></div>
-<canvas id="staticChart" height="150"></canvas>
-<div id="tableWrap"></div>
-</div>
-
-<!-- DYNAMIC TAB -->
-<div id="dynamicTab" class="tabContent">
-
-<!-- Radio buttons for market selection -->
-<table style="border-collapse: collapse; width:100%; margin-bottom:10px;">
-<tr>
-<td style="vertical-align:top; padding-right:10px; color:var(--muted); font-size:13px; width:1%; white-space:nowrap;">Investment Approach:</td>
-<td style="vertical-align:top;">
-  <div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
-    <label><input type="radio" name="marketSource" value="nifty50" checked onchange="updateMarket()"> Nifty 50</label>
-    <label><input type="radio" name="marketSource" value="nifty500" onchange="updateMarket()"> Nifty 500</label>
-    <label><input type="radio" name="marketSource" value="niftynext50" onchange="updateMarket()"> Nifty Next 50</label>
-  </div>
-</td>
-</tr>
-</table>
-
-<!-- Slider for number of simulations -->
-<div class="sliderContainer">
-<label>Number of sequences to simulate (max <span id="maxSequences">10,000</span>):
-  <span class="info-icon">?
-    <div class="tooltip">
-      <ul>
-        <li><b>1-Year Rolling Windows:</b> For every trading day in history, we calculate a 1-year return by finding the price change 365 days later. This creates thousands of overlapping samples.</li>
-        <li><b>Adjacency Mapping:</b> Each 1-year period is linked to the specific return period that starts where it ended, allowing us to follow history chronologically.</li>
-        <li><b>Block Stitching:</b> For each simulation:
-          <ol>
-            <li>Pick a random starting day from history.</li>
-            <li>Follow the map for a random "block" of 3 to 8 consecutive years.</li>
-            <li>When a block ends, jump to a new random day and repeat until the end of the simulation.</li>
-          </ol>
-        </li>
-        <li><b>Statistical Integrity:</b> This preserves <b>local momentum</b> and <b>volatility clusters</b> found in real data, while providing massive diversity via daily rolling starts.</li>
-      </ul>
+<div class="primaryTabBody">
+  <!-- SIMULATOR TAB CONTENT -->
+  <div id="simulatorTab" class="primaryTabContent active">
+    <!-- Top sliders grid - 2 rows, 3 columns -->
+    <div class="grid-2x3">
+      <div class="slider-item">
+        <label>Retirement age: <span id="ageValue" class="value-display">37</span></label>
+        <input type="range" id="currentAgeSlider" min="25" max="60" value="37" step="1">
+      </div>
+      <div class="slider-item">
+        <label>Life Expectancy (year): <span id="endAgeValue" class="value-display">85</span></label>
+        <input type="range" id="endAgeSlider" min="80" max="100" value="85" step="1">
+      </div>
+      <div class="slider-item empty"></div>
+      <div class="slider-item">
+        <label>Initial corpus (₹): <span id="corpusValue" class="value-display">3,50,00,000</span></label>
+        <input type="range" id="corpusSlider" min="10000000" max="100000000" value="35000000" step="500000">
+        <div id="corpusWords" class="hint"></div>
+      </div>
+      <div class="slider-item">
+        <label>Initial monthly withdrawal (₹): <span id="monthlyValue" class="value-display">75,000</span></label>
+        <input type="range" id="monthlySlider" min="50000" max="200000" value="75000" step="1000">
+        <div id="monthlyWords" class="hint"></div>
+      </div>
+      <div class="slider-item">
+        <label>Increase withdrawal each year (%): <span id="stepupValue" class="value-display">6</span></label>
+        <input type="range" id="stepupSlider" min="3" max="8" value="6" step="0.1">
+      </div>
     </div>
-  </span>
-</label>
-<input type="range" id="simCountSlider" min="1" max="10000" value="4000">
-<span id="simCountValue">1</span>
-</div>
 
-<!-- Run button and status inline -->
-<div class="buttonContainer">
-<button id="runMc">Run simulations</button>
-<span id="niftyStatus" class="muted"></span>
-</div>
+    <hr class="divider">
 
-<!-- MC Results Tables Container - 1 row, 2 columns with invisible borders -->
-<table id="mcOuterContainer" style="display:none; border-collapse:collapse; width:auto; margin:20px auto; border:none;">
-  <tr>
-    <!-- Left cell: Success Statistics Table -->
-    <td style="border:none; padding:0 50px 0 0; vertical-align:top;">
-      <table id="mcResultsTable">
-        <tbody>
-          <tr>
-            <td>Total runs
-              <span class="info-icon">?
-                <div class="tooltip">
-                  <ul>
-                    <li><b>1-Year Rolling Windows:</b> For every trading day in history, we calculate a 1-year return by finding the price change 365 days later. This creates thousands of overlapping samples.</li>
-                    <li><b>Adjacency Mapping:</b> Each 1-year period is linked to the specific return period that starts where it ended, allowing us to follow history chronologically.</li>
-                    <li><b>Block Stitching:</b> For each simulation:
-                      <ol>
-                        <li>Pick a random starting day from history.</li>
-                        <li>Follow the map for a random "block" of 3 to 8 consecutive years.</li>
-                        <li>When a block ends, jump to a new random day and repeat until the end of the simulation.</li>
-                      </ol>
-                    </li>
-                    <li><b>Statistical Integrity:</b> This preserves <b>local momentum</b> and <b>volatility clusters</b> found in real data, while providing massive diversity via daily rolling starts.</li>
-                  </ul>
-                </div>
-              </span>
-            </td>
-            <td id="mcTotal">0</td>
-          </tr>
-          <tr>
-            <td>Passed</td>
-            <td id="mcPassed">0</td>
-          </tr>
-          <tr>
-            <td>Failed</td>
-            <td id="mcFailed">0</td>
-          </tr>
-          <tr>
-            <td>Success rate</td>
-            <td id="mcRate">0%</td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="tabContainer">
+    <div class="tabHeader">
+    <div class="tabBtn active" data-tab="staticTab">Static Analysis</div>
+    <div class="tabBtn" data-tab="dynamicTab">Sequence of Returns Risk Analysis</div>
+    </div>
+
+    <div class="tabBody">
+
+    <!-- STATIC TAB -->
+    <div id="staticTab" class="tabContent active">
+    <div class="grid">
+    <div class="slider-item">
+    <label>Estimated annual return (%): <span id="retValue" class="value-display">7</span></label>
+    <input type="range" id="retSlider" min="5" max="12" value="7" step="0.1">
+    </div>
+    </div>
+
+    <div id="staticSummary" class="muted"></div>
+    <canvas id="staticChart" height="150"></canvas>
+    <div id="tableWrap"></div>
+    </div>
+
+    <!-- DYNAMIC TAB -->
+    <div id="dynamicTab" class="tabContent">
+
+    <!-- Radio buttons for market selection -->
+    <table style="border-collapse: collapse; width:100%; margin-bottom:10px;">
+    <tr>
+    <td style="vertical-align:top; padding-right:10px; color:var(--muted); font-size:13px; width:1%; white-space:nowrap;">Investment Approach:</td>
+    <td style="vertical-align:top;">
+      <div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
+        <label><input type="radio" name="marketSource" value="nifty50" checked onchange="updateMarket()"> Nifty 50</label>
+        <label><input type="radio" name="marketSource" value="nifty500" onchange="updateMarket()"> Nifty 500</label>
+        <label><input type="radio" name="marketSource" value="niftynext50" onchange="updateMarket()"> Nifty Next 50</label>
+      </div>
     </td>
+    </tr>
+    </table>
 
-    <!-- Right cell: Percentile Table -->
-    <td style="border:none; padding:0; vertical-align:top;">
-      <table id="mcPercentilesTable">
-        <thead>
-          <tr>
-            <th># simulations</th>
-            <th>Min Corpus Left</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>80%</td>
-            <td id="p80">₹ 0</td>
-          </tr>
-          <tr>
-            <td>90%</td>
-            <td id="p90">₹ 0</td>
-          </tr>
-          <tr>
-            <td>95%</td>
-            <td id="p95">₹ 0</td>
-          </tr>
-        </tbody>
-      </table>
-    </td>
-  </tr>
-</table>
+    <!-- Slider for number of simulations -->
+    <div class="sliderContainer">
+    <label>Number of sequences to simulate (max <span id="maxSequences">10,000</span>):
+      <span class="info-icon">?
+        <div class="tooltip">
+          <ul>
+            <li><b>1-Year Rolling Windows:</b> For every trading day in history, we calculate a 1-year return by finding the price change 365 days later. This creates thousands of overlapping samples.</li>
+            <li><b>Adjacency Mapping:</b> Each 1-year period is linked to the specific return period that starts where it ended, allowing us to follow history chronologically.</li>
+            <li><b>Block Stitching:</b> For each simulation:
+              <ol>
+                <li>Pick a random starting day from history.</li>
+                <li>Follow the map for a random "block" of 3 to 8 consecutive years.</li>
+                <li>When a block ends, jump to a new random day and repeat until the end of the simulation.</li>
+              </ol>
+            </li>
+            <li><b>Statistical Integrity:</b> This preserves <b>local momentum</b> and <b>volatility clusters</b> found in real data, while providing massive diversity via daily rolling starts.</li>
+          </ul>
+        </div>
+      </span>
+    </label>
+    <input type="range" id="simCountSlider" min="1" max="10000" value="4000">
+    <span id="simCountValue">1</span>
+    </div>
 
-<canvas id="mcChart" height="220" style="display:none"></canvas>
+    <!-- Run button and status inline -->
+    <div class="buttonContainer">
+    <button id="runMc">Run simulations</button>
+    <span id="niftyStatus" class="muted"></span>
+    </div>
 
-<!-- Samples slider (below chart) – hidden by default -->
-<div class="samplesContainer">
-<label for="samplesSlider">Samples on chart:</label>
-<input type="range" id="samplesSlider" min="100" max="300" value="100" step="10">
-<span id="samplesValue">100</span>
-</div>
+    <!-- MC Results Tables Container - 1 row, 2 columns with invisible borders -->
+    <table id="mcOuterContainer" style="display:none; border-collapse:collapse; width:auto; margin:20px auto; border:none;">
+      <tr>
+        <!-- Left cell: Success Statistics Table -->
+        <td style="border:none; padding:0 50px 0 0; vertical-align:top;">
+          <table id="mcResultsTable">
+            <tbody>
+              <tr>
+                <td>Total runs
+                  <span class="info-icon">?
+                    <div class="tooltip">
+                      <ul>
+                        <li><b>1-Year Rolling Windows:</b> For every trading day in history, we calculate a 1-year return by finding the price change 365 days later. This creates thousands of overlapping samples.</li>
+                        <li><b>Adjacency Mapping:</b> Each 1-year period is linked to the specific return period that starts where it ended, allowing us to follow history chronologically.</li>
+                        <li><b>Block Stitching:</b> For each simulation:
+                          <ol>
+                            <li>Pick a random starting day from history.</li>
+                            <li>Follow the map for a random "block" of 3 to 8 consecutive years.</li>
+                            <li>When a block ends, jump to a new random day and repeat until the end of the simulation.</li>
+                          </ol>
+                        </li>
+                        <li><b>Statistical Integrity:</b> This preserves <b>local momentum</b> and <b>volatility clusters</b> found in real data, while providing massive diversity via daily rolling starts.</li>
+                      </ul>
+                    </div>
+                  </span>
+                </td>
+                <td id="mcTotal">0</td>
+              </tr>
+              <tr>
+                <td>Passed</td>
+                <td id="mcPassed">0</td>
+              </tr>
+              <tr>
+                <td>Failed</td>
+                <td id="mcFailed">0</td>
+              </tr>
+              <tr>
+                <td>Success rate</td>
+                <td id="mcRate">0%</td>
+              </tr>
+            </tbody>
+          </table>
+        </td>
 
-<!-- Sample button placed below chart -->
-<div style="margin:10px 0; text-align:center;">
-<button id="sampleFailBtn" style="background:#6b7280; display:none;">Show a sample failing sequence</button>
-</div>
+        <!-- Right cell: Percentile Table -->
+        <td style="border:none; padding:0; vertical-align:top;">
+          <table id="mcPercentilesTable">
+            <thead>
+              <tr>
+                <th># simulations</th>
+                <th>Min Corpus Left</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>80%</td>
+                <td id="p80">₹ 0</td>
+              </tr>
+              <tr>
+                <td>90%</td>
+                <td id="p90">₹ 0</td>
+              </tr>
+              <tr>
+                <td>95%</td>
+                <td id="p95">₹ 0</td>
+              </tr>
+            </tbody>
+          </table>
+        </td>
+      </tr>
+    </table>
 
-<!-- Container for sample failing sequence table -->
-<div id="sampleTableContainer"></div>
+    <canvas id="mcChart" height="220" style="display:none"></canvas>
 
-<div class="loaderOverlay" id="mcLoader">
-<div class="spinner"></div>
-<div class="muted">Running simulations...</div>
-</div>
-</div>
+    <!-- Samples slider (below chart) – hidden by default -->
+    <div class="samplesContainer">
+    <label for="samplesSlider">Samples on chart:</label>
+    <input type="range" id="samplesSlider" min="100" max="300" value="100" step="10">
+    <span id="samplesValue">100</span>
+    </div>
 
-<!-- BUCKET TAB -->
-<div id="bucketTab" class="tabContent">
-  <div class="muted" style="text-align:center; padding:60px 20px;">
-    <h3 style="color:var(--accent); margin-bottom:10px;">3 Bucket Strategy</h3>
-    <p>A sophisticated simulation of the Bucket Strategy (Cash, Debt, Equity) is currently being developed.</p>
-    <p style="font-size:12px; margin-top:20px; opacity:0.8;">This model will simulate multi-asset rebalancing and "refilling" logic during retirement.</p>
+    <!-- Sample button placed below chart -->
+    <div style="margin:10px 0; text-align:center;">
+    <button id="sampleFailBtn" style="background:#6b7280; display:none;">Show a sample failing sequence</button>
+    </div>
+
+    <!-- Container for sample failing sequence table -->
+    <div id="sampleTableContainer"></div>
+
+    <div class="loaderOverlay" id="mcLoader">
+    <div class="spinner"></div>
+    <div class="muted">Running simulations...</div>
+    </div>
+    </div>
+
+    </div>
+    </div>
   </div>
-</div>
+
+  <!-- GOAL TRACKING TAB CONTENT -->
+  <div id="goalTrackingTab" class="primaryTabContent">
+    <div class="tabContainer" style="border:none;">
+      <div class="tabHeader" style="background:none; border-bottom:1px solid #e2e8f0; margin-bottom:20px;">
+        <div class="tabBtn active" data-tab="networthDashboard">Networth</div>
+        <div class="tabBtn" data-tab="investmentsTab">Investments</div>
+        <div class="tabBtn" data-tab="goalsTab">Goals</div>
+      </div>
+
+      <div class="tabBody" style="padding:0;">
+        <!-- NETWORTH DASHBOARD -->
+        <div id="networthDashboard" class="tabContent active">
+          <div class="stat-card" style="display:flex; align-items:center; justify-content:center; gap:40px; padding:30px; min-height:240px; flex-wrap:wrap;">
+            <div style="position:relative; width:220px; height:220px;">
+              <canvas id="allocationChart"></canvas>
+              <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:none; text-align:center;">
+                <label style="margin:0; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em;">Total Networth</label>
+                <div class="stat-value" id="totalNetworth" style="font-size:18px; margin-top:4px;">₹ 0</div>
+              </div>
+            </div>
+            <div id="allocationBreakdown" style="min-width:200px; font-size:13px; line-height:2.2;"></div>
+          </div>
+          
+          <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:-10px; margin-bottom:20px;">
+            <button id="importData" style="background:#64748b; font-size:12px; padding:5px 12px; opacity:0.8;">Import JSON</button>
+            <button id="exportData" style="background:var(--accent); font-size:12px; padding:5px 12px; opacity:0.8;">Export JSON</button>
+            <input type="file" id="importFile" style="display:none;" accept=".json">
+          </div>
+
+          <div class="section-title">Goals</div>
+          <div id="goalSummaryContainer"></div>
+        </div>
+
+        <!-- INVESTMENTS TAB -->
+        <div id="investmentsTab" class="tabContent">
+          <div class="view-mode-container" id="investmentsView">
+            <div id="investmentList"></div>
+            <button class="add-btn-subtle" id="showAddInvestment">+ Add Investment</button>
+          </div>
+          
+          <div class="form-overlay" id="investmentFormOverlay">
+            <div id="investmentForm" class="form-container">
+              <h3 id="invFormTitle">Add Investment</h3>
+              <div class="form-grid">
+                <input type="text" id="invName" placeholder="Investment Name (e.g. ICICI Multi-Asset)">
+                <div class="flex-row">
+                  <input type="text" id="invUnits" placeholder="Units">
+                  <input type="text" id="invPrice" placeholder="Price/NAV">
+                  <input type="text" id="invValue" placeholder="Investment Value" readonly style="background:#f8fafc; color:var(--muted); cursor:not-allowed;">
+                </div>
+                <div class="allocation-input">
+                  <label>Asset Allocation (%)</label>
+                  <div class="allocation-grid">
+                    <div><small>Equity</small><input type="number" id="allocEq" value="0"></div>
+                    <div><small>Debt</small><input type="number" id="allocDt" value="0"></div>
+                    <div><small>Gold</small><input type="number" id="allocGd" value="0"></div>
+                    <div><small>Other</small><input type="number" id="allocOt" value="0"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button id="deleteInvestment" style="background:#ef4444; margin-right:auto; display:none;">Delete</button>
+                <button id="saveInvestment">Save</button>
+                <button id="cancelInvestment" style="background:#64748b;">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- GOALS TAB -->
+        <div id="goalsTab" class="tabContent">
+          <div class="view-mode-container" id="goalsView">
+            <div id="goalList"></div>
+            <button class="add-btn-subtle" id="showAddGoal">+ Add Goal</button>
+          </div>
+
+          <div class="form-overlay" id="goalFormOverlay">
+            <div id="goalForm" class="form-container">
+              <h3 id="goalFormTitle">Add Financial Goal</h3>
+              <div class="form-grid">
+                <input type="text" id="goalName" placeholder="Goal Name (e.g. Retirement)">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">
+                  <input type="checkbox" id="goalNoTrack" style="width:auto;"> 
+                  <label for="goalNoTrack" style="margin:0; cursor:pointer;">Do not track progress (e.g. Already achieved)</label>
+                </div>
+                <div id="goalTrackFields">
+                  <input type="text" id="goalTarget" placeholder="Target Amount (₹)" style="margin-bottom:15px;">
+                  <input type="number" id="goalYear" placeholder="Target Year (e.g. 2045)">
+                </div>
+                
+                <div class="investment-tagger">
+                  <label style="display:block; margin-bottom:10px;">Linked Investments</label>
+                  <div id="taggedInvestmentsList"></div>
+                  <button class="add-tag-btn" id="addInvestmentTag">+ Link Investment</button>
+                  <div id="investmentSelectorPopup" class="investment-selector-popup" style="display:none;"></div>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button id="deleteGoal" style="background:#ef4444; margin-right:auto; display:none;">Delete</button>
+                <button id="saveGoal">Save</button>
+                <button id="cancelGoal" style="background:#64748b;">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
 </div>
 </div>

@@ -2,6 +2,7 @@
 import { formatNumber, toIndianWords, formatIndian } from './utils.js';
 import { runStatic } from './staticSim.js';
 import { loadMarket, runMCFlow, redrawChartWithSamples, renderSampleFail, lastFailIndices } from './mcSim.js';
+import { initGoals } from './goals.js';
 
 // ==================== DOM wiring & updateAll ====================
 function updateAll() {
@@ -145,8 +146,22 @@ document.getElementById('sampleFailBtn').addEventListener('click', () => {
 // Tabs
 document.querySelectorAll('.tabBtn').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.tabBtn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tabContent').forEach(c => c.classList.remove('active'));
+    // Only affect sibling sub-tabs within the same sub-tab container
+    const container = btn.closest('.tabContainer');
+    if (container) {
+      container.querySelectorAll('.tabBtn').forEach(b => b.classList.remove('active'));
+      container.querySelectorAll('.tabContent').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.tab).classList.add('active');
+    }
+  });
+});
+
+// Primary Tabs
+document.querySelectorAll('.primaryTabBtn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.primaryTabBtn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.primaryTabContent').forEach(c => c.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById(btn.dataset.tab).classList.add('active');
   });
@@ -200,3 +215,4 @@ window.updateMarket = async () => {
 // Initial draw and market load
 updateAll();
 loadMarket('nifty50');
+initGoals();
