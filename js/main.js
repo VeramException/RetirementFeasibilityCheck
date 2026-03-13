@@ -1,5 +1,5 @@
 // js/main.js
-import { formatNumber, toIndianWords, formatIndian, showToast } from './utils.js';
+import { formatNumber, toIndianWords, formatIndian, showToast, parseNumber } from './utils.js';
 import { runStatic } from './staticSim.js';
 import { loadMarket, runMCFlow, redrawChartWithSamples, renderSampleFail, lastFailIndices } from './mcSim.js';
 import { initGoals } from './goals.js';
@@ -42,6 +42,16 @@ const inputToSliderMap = {
   'retInput': 'retSlider'
 };
 
+// Map display names for error messages
+const inputDisplayNames = {
+  'ageInput': 'Retirement age',
+  'endAgeInput': 'Life expectancy',
+  'corpusInput': 'Initial corpus',
+  'monthlyInput': 'Monthly withdrawal',
+  'stepupInput': 'Withdrawal increase',
+  'retInput': 'Annual return'
+};
+
 // Attach input events
 Object.keys(inputToSliderMap).forEach(inputId => {
   const inputEl = document.getElementById(inputId);
@@ -51,12 +61,17 @@ Object.keys(inputToSliderMap).forEach(inputId => {
   if (inputEl && sliderEl) {
     inputEl.addEventListener('change', () => {
       let val = parseNumber(inputEl.value);
-      
-      // Clamp value within slider range
       const min = parseFloat(sliderEl.min);
       const max = parseFloat(sliderEl.max);
-      if (val < min) val = min;
-      if (val > max) val = max;
+      const displayName = inputDisplayNames[inputId];
+
+      if (val < min) {
+        showToast(`${displayName} cannot be less than ${inputId.includes('corpus') || inputId.includes('monthly') ? '₹ ' + formatNumber(min) : min + (inputId.includes('Age') ? '' : '%')}`);
+        val = min;
+      } else if (val > max) {
+        showToast(`${displayName} cannot exceed ${inputId.includes('corpus') || inputId.includes('monthly') ? '₹ ' + formatNumber(max) : max + (inputId.includes('Age') ? '' : '%')}`);
+        val = max;
+      }
       
       sliderEl.value = val;
       updateAll();

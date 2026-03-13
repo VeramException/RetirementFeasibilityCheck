@@ -195,7 +195,12 @@ button:disabled{opacity:.6;cursor:not-allowed}
         margin-left: 4px;
     }
     input[type=range] {
+        display: block;
+        width: 100%;
         max-width: 100%;
+    }
+    label {
+        width: 100%;
     }
     
     #tableWrap, #sampleTableContainer {
