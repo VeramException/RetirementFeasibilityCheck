@@ -271,7 +271,17 @@ export function renderSampleFail() {
     if (y < path.length - 1) m *= (1 + step);
   }
 
-  let html = '<table id="sampleTable"><thead><tr><th>Age</th><th>Fund Start Date</th><th>Fund End Date</th><th>Return %</th><th>XIRR so far</th><th>Starting Corpus</th><th>After Return</th><th>Withdrew</th><th>Final Corpus</th></tr></thead><tbody>';
+  let html = '<table id="sampleTable"><thead><tr>' +
+    '<th>Age</th>' +
+    '<th class="desktop-only">Fund Start Date</th>' +
+    '<th class="desktop-only">Fund End Date</th>' +
+    '<th>Return %</th>' +
+    '<th class="desktop-only">XIRR so far</th>' +
+    '<th><span class="desktop-only">Starting Corpus</span><span class="mobile-only">Start</span></th>' +
+    '<th class="desktop-only">After Return</th>' +
+    '<th>Withdrew</th>' +
+    '<th><span class="desktop-only">Final Corpus</span><span class="mobile-only">Final</span></th>' +
+    '</tr></thead><tbody>';
   rows.forEach(r => {
     const rowClass = r.depleted ? 'depleted-row' : '';
     const retClass = r.retPct.includes('-') ? 'negative' : '';
@@ -280,14 +290,14 @@ export function renderSampleFail() {
     const finalClass = r.finalCorpus < 0 ? 'negative' : '';
     html += `<tr class="${rowClass}">
       <td>${r.age}</td>
-      <td>${r.startDate}</td>
-      <td>${r.endDate}</td>
+      <td class="desktop-only">${r.startDate}</td>
+      <td class="desktop-only">${r.endDate}</td>
       <td class="${retClass}">${r.retPct}</td>
-      <td>${r.xirr}</td>
-      <td class="${startClass}">₹ ${formatIndian(r.startCorpus)}</td>
-      <td class="${afterClass}">₹ ${formatIndian(r.afterReturn)}</td>
-      <td>₹ ${formatIndian(r.withdrew)}</td>
-      <td class="${finalClass}">₹ ${formatIndian(r.finalCorpus)}</td>
+      <td class="desktop-only">${r.xirr}</td>
+      <td class="${startClass}"><span class="desktop-only">₹ </span>${formatIndian(r.startCorpus)}</td>
+      <td class="desktop-only">₹ ${formatIndian(r.afterReturn)}</td>
+      <td><span class="desktop-only">₹ </span>${formatIndian(r.withdrew)}</td>
+      <td class="${finalClass}"><span class="desktop-only">₹ </span>${formatIndian(r.finalCorpus)}</td>
     </tr>`;
   });
   html += '</tbody></table>';

@@ -13,24 +13,63 @@ function updateAll() {
   const stepup = parseFloat(document.getElementById('stepupSlider').value);
   const ret = parseFloat(document.getElementById('retSlider').value);
 
-  console.log('updateAll called - endAge:', endAge);
-  document.getElementById('corpusValue').textContent = formatNumber(corpus);
-  document.getElementById('ageValue').textContent = age;
-  document.getElementById('endAgeValue').textContent = endAge;
-  document.getElementById('monthlyValue').textContent = formatNumber(monthly);
-  document.getElementById('stepupValue').textContent = stepup.toFixed(1);
-  document.getElementById('retValue').textContent = ret.toFixed(1);
+  // Update input fields with formatted values
+  document.getElementById('corpusInput').value = formatNumber(corpus);
+  document.getElementById('ageInput').value = age;
+  document.getElementById('endAgeInput').value = endAge;
+  document.getElementById('monthlyInput').value = formatNumber(monthly);
+  document.getElementById('stepupInput').value = stepup.toFixed(1);
+  document.getElementById('retInput').value = ret.toFixed(1);
 
   const corpusWords = toIndianWords(corpus);
   const annualWithdrawal = monthly * 12;
   const withdrawalPct = corpus > 0 ? ((annualWithdrawal / corpus) * 100).toFixed(1) : '0';
   const ratio = corpus > 0 ? (corpus / annualWithdrawal).toFixed(1) : '0';
-  document.getElementById('corpusWords').innerHTML = `${corpusWords}<br>(${ratio}x of 1st year withdrawal)`;
+  document.getElementById('corpusWords').innerHTML = `${corpusWords} <span class="hint-detail">(${ratio}x of 1st year withdrawal)</span>`;
   const monthlyWords = toIndianWords(monthly);
-  document.getElementById('monthlyWords').innerHTML = `${monthlyWords}<br>(${withdrawalPct}% of 1st year corpus)`;
+  document.getElementById('monthlyWords').innerHTML = `${monthlyWords} <span class="hint-detail">(${withdrawalPct}% of 1st year corpus)</span>`;
 
   runStatic();
 }
+
+// Map inputs to sliders
+const inputToSliderMap = {
+  'ageInput': 'currentAgeSlider',
+  'endAgeInput': 'endAgeSlider',
+  'corpusInput': 'corpusSlider',
+  'monthlyInput': 'monthlySlider',
+  'stepupInput': 'stepupSlider',
+  'retInput': 'retSlider'
+};
+
+// Attach input events
+Object.keys(inputToSliderMap).forEach(inputId => {
+  const inputEl = document.getElementById(inputId);
+  const sliderId = inputToSliderMap[inputId];
+  const sliderEl = document.getElementById(sliderId);
+
+  if (inputEl && sliderEl) {
+    inputEl.addEventListener('change', () => {
+      let val = parseNumber(inputEl.value);
+      
+      // Clamp value within slider range
+      const min = parseFloat(sliderEl.min);
+      const max = parseFloat(sliderEl.max);
+      if (val < min) val = min;
+      if (val > max) val = max;
+      
+      sliderEl.value = val;
+      updateAll();
+    });
+
+    // Also handle Enter key
+    inputEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        inputEl.blur();
+      }
+    });
+  }
+});
 
 // Attach slider events
 ['corpusSlider','currentAgeSlider','endAgeSlider','monthlySlider','stepupSlider','retSlider'].forEach(id => {
@@ -160,6 +199,7 @@ document.querySelectorAll('.tabBtn').forEach(btn => {
 // Primary Tabs
 document.querySelectorAll('.primaryTabBtn').forEach(btn => {
   btn.addEventListener('click', () => {
+    if (!btn.dataset.tab) return;
     document.querySelectorAll('.primaryTabBtn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.primaryTabContent').forEach(c => c.classList.remove('active'));
     btn.classList.add('active');

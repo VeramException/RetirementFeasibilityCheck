@@ -22,7 +22,8 @@
 
 <div class="primaryTabHeader">
   <div class="primaryTabBtn active" data-tab="simulatorTab">Retirement Cashflow Simulator</div>
-  <div class="primaryTabBtn" data-tab="goalTrackingTab">Goal Tracker <span style="color: #f59e0b;">★</span></div>
+  <div class="primaryTabBtn" data-tab="goalTrackingTab">Goal Tracker</div>
+  <a href="https://asrajavel.github.io/portfolio-simulator/lumpsum" target="_blank" class="primaryTabBtn external-link">Rolling Returns <span style="font-size: 12px; margin-left: 2px;">↗</span></a>
 </div>
 
 <div class="primaryTabBody">
@@ -31,26 +32,26 @@
     <!-- Top sliders grid - 2 rows, 3 columns -->
     <div class="grid-2x3">
       <div class="slider-item">
-        <label>Retirement age: <span id="ageValue" class="value-display">37</span></label>
+        <label>Retirement age: <input type="text" id="ageInput" class="editable-value" value="37"></label>
         <input type="range" id="currentAgeSlider" min="25" max="60" value="37" step="1">
       </div>
       <div class="slider-item">
-        <label>Life Expectancy (year): <span id="endAgeValue" class="value-display">85</span></label>
+        <label>Life Expectancy (year): <input type="text" id="endAgeInput" class="editable-value" value="85"></label>
         <input type="range" id="endAgeSlider" min="80" max="100" value="85" step="1">
       </div>
       <div class="slider-item empty"></div>
       <div class="slider-item">
-        <label>Initial corpus (₹): <span id="corpusValue" class="value-display">3,50,00,000</span></label>
+        <label>Initial corpus (₹): <input type="text" id="corpusInput" class="editable-value" value="3,50,00,000"></label>
         <input type="range" id="corpusSlider" min="10000000" max="100000000" value="35000000" step="500000">
         <div id="corpusWords" class="hint"></div>
       </div>
       <div class="slider-item">
-        <label>Initial monthly withdrawal (₹): <span id="monthlyValue" class="value-display">75,000</span></label>
+        <label>Initial monthly withdrawal (₹): <input type="text" id="monthlyInput" class="editable-value" value="75,000"></label>
         <input type="range" id="monthlySlider" min="50000" max="200000" value="75000" step="1000">
         <div id="monthlyWords" class="hint"></div>
       </div>
       <div class="slider-item">
-        <label>Increase withdrawal each year (%): <span id="stepupValue" class="value-display">6</span></label>
+        <label>Increase withdrawal each year (%): <input type="text" id="stepupInput" class="editable-value" value="6"></label>
         <input type="range" id="stepupSlider" min="3" max="8" value="6" step="0.1">
       </div>
     </div>
@@ -69,7 +70,7 @@
     <div id="staticTab" class="tabContent active">
     <div class="grid">
     <div class="slider-item">
-    <label>Estimated annual return (%): <span id="retValue" class="value-display">7</span></label>
+    <label>Estimated annual return (%): <input type="text" id="retInput" class="editable-value" value="7"></label>
     <input type="range" id="retSlider" min="5" max="12" value="7" step="0.1">
     </div>
     </div>

@@ -24,23 +24,30 @@ export function runStatic() {
         start = end;
     }
 
-    let html = '<table><thead><tr><th class="age">Age</th><th>Starting Corpus</th><th>Corpus after ' + (retPct*100).toFixed(1) + '% Growth</th><th>Monthly Withdrawal</th><th>Annual Withdrawal</th><th>Ending Corpus</th></tr></thead><tbody>';
+    let html = '<table><thead><tr>' + 
+        '<th class="age">Age</th>' +
+        '<th><span class="desktop-only">Starting Corpus</span><span class="mobile-only">Start</span></th>' +
+        '<th><span class="desktop-only">Corpus after ' + (retPct*100).toFixed(1) + '% Growth</span><span class="mobile-only">Growth</span></th>' +
+        '<th><span class="desktop-only">Monthly Withdrawal</span><span class="mobile-only">Monthly</span></th>' +
+        '<th><span class="desktop-only">Annual Withdrawal</span><span class="mobile-only">Annual</span></th>' +
+        '<th><span class="desktop-only">Ending Corpus</span><span class="mobile-only">End</span></th>' +
+        '</tr></thead><tbody>';
     rows.forEach(r => {
         if (r.depleted) {
             html += `<tr class="depleted"><td class="age">${r.age}</td><td></td><td></td><td></td><td></td><td></td></tr>`;
         } else {
             const startStr = formatIndian(r.start);
             const afterStr = formatIndian(r.after);
-            const monthlyStr = '- ' + formatIndian(r.monthly);
-            const annualStr = '- ' + formatIndian(r.annual);
+            const monthlyStr = '-' + formatIndian(r.monthly);
+            const annualStr = '-' + formatIndian(r.annual);
             const endStr = formatIndian(r.end);
             html += `<tr>
                 <td class="age">${r.age}</td>
-                <td>₹ ${startStr}</td>
-                <td>₹ ${afterStr}</td>
-                <td class="negative">₹ ${monthlyStr}</td>
-                <td class="negative">₹ ${annualStr}</td>
-                <td>₹ ${endStr}</td>
+                <td><span class="desktop-only">₹ </span>${startStr}</td>
+                <td><span class="desktop-only">₹ </span>${afterStr}</td>
+                <td class="negative"><span class="desktop-only">₹ </span>${monthlyStr}</td>
+                <td class="negative"><span class="desktop-only">₹ </span>${annualStr}</td>
+                <td><span class="desktop-only">₹ </span>${endStr}</td>
             </tr>`;
         }
     });
